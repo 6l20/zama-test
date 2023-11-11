@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  server:
+    build: .
+    environment:
+      LOG_FORMAT: ${LOG_FORMAT}
+      LOG_LEVEL: ${LOG_LEVEL}
+      SERVICE_PORT: ${SERVICE_PORT}
+    command: ./zama server
+    volumes:
+      - .:/app
+      - upload_data:/data
+    ports:
+      - "8080:${SERVICE_PORT}"
+  client:
+    build: .
+    environment:
+      LOG_FORMAT: ${LOG_FORMAT}
+      LOG_LEVEL: ${LOG_LEVEL}
+      UPLOAD_URL: http://server:${SERVICE_PORT}/upload
+    command: ./zama client
+    volumes:
+      - .:/app
+    links:
+      - "server"
+volumes:
+  upload_data:
+  minio_storage: {}
