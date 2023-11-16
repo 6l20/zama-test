@@ -18,6 +18,9 @@ services:
       LOG_FORMAT: ${LOG_FORMAT}
       LOG_LEVEL: ${LOG_LEVEL}
       UPLOAD_URL: http://server:${SERVICE_PORT}/upload
+      DOWNLOAD_URL: http://server:${SERVICE_PORT}/download
+      PROOF_URL: http://server:${SERVICE_PORT}/proof
+      ROOT_FILE: merkleRoot
     command: ./zama client
     volumes:
       - .:/app
