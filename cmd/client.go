@@ -5,12 +5,12 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/6l20/zama-test/client"
 	"github.com/6l20/zama-test/client/config"
+	"github.com/6l20/zama-test/client/stores"
+	"github.com/6l20/zama-test/client/usecases"
 	"github.com/6l20/zama-test/common/log/zap"
-	"github.com/6l20/zama-test/common/merkle"
 	"github.com/spf13/cobra"
 )
 
@@ -43,45 +43,24 @@ to quickly create a Cobra application.`,
 			return
 		}
 
-		files, err := os.ReadDir(fileDirPath)
+		store := stores.NewLocalStore(fileDirPath, clientConfig.RootFile)
+
+		client, err := client.NewClient(logger, *clientConfig, store)
 		if err != nil {
-			logger.Fatal(err.Error())
-			os.Exit(1)
+			logger.Error("Error creating client:", err)
 		}
 
-		logger.Debug("Starting client")
+		useCases := usecases.NewClientUseCases(logger, client)
 
-		merkleManager := merkle.NewMerkleManager(fileDirPath+ "merkle-root.txt", logger)
+		useCases.GenerateMerkleTree()
 
-		merkleTree, err := merkleManager.BuildMerkleTreeFromFS(fileDirPath)
+		proof, err := useCases.GetMerkleProofForFile(1)
 		if err != nil {
-			logger.Fatal(err.Error())
-			os.Exit(1)
+			logger.Error("Error getting proof:", err)
 		}
+		logger.Info("Proof:", proof)
 
-		logger.Info("Merkle Tree", "root Hash", merkleTree.Root.Hash)
-
-		proof := merkleManager.GenerateProof(1)
-		logger.Info("Merkle Tree", "proof",  proof)
-
-
-		verified := merkleManager.VerifyProof("57a7503b110edb69d272202911dcf347ef82f80eb71f307cc67af768baca92ca",*proof, merkleTree.Root.Hash)
-
-		logger.Info("Merkle Tree", "verified", verified)
-
-		merkleManager.StoreMerkleRoot()
-	
-		for _, f := range files {
-			if f.IsDir() {
-				continue
-			}
-			err = client.UploadFile(fileDirPath + f.Name(), clientConfig.UploadUrl)
-		if err != nil {
-			logger.Error("Error uploading file:", err)
-			return
-		}
-		logger.Info("File uploaded successfully", "file", f.Name())
-		}
+		
 	},	
 		
 }

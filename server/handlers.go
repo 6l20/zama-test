@@ -45,3 +45,15 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	// Return the name of the file back to the client
 	w.Write([]byte(fmt.Sprintf("Successfully uploaded file: %s", header.Filename)))
 }
+
+
+func DownloadHandler(w http.ResponseWriter, r *http.Request) {
+	fileNum := r.URL.Query().Get("filenum")
+    if fileNum == "" {
+        http.Error(w, "File number is required", http.StatusBadRequest)
+        return
+    }
+
+	
+
+}

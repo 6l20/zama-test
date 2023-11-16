@@ -7,6 +7,7 @@ import (
 
 	"github.com/6l20/zama-test/common/log/zap"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMerkle1(t *testing.T) {
@@ -15,7 +16,7 @@ func TestMerkle1(t *testing.T) {
 		Level:  "debug",
 		Format: "text",
 	})
-	manager := NewMerkleManager("/",zapLogger)
+	manager := NewMerkleManager(zapLogger)
 
 	dataBlocks := [][]byte{
 		[]byte("a"),
@@ -43,13 +44,15 @@ func TestMerkle1(t *testing.T) {
 
 	assert.Equal(t, "58c89d709329eb37285837b042ab6ff72c7c8f74de0446b091b6a0131c102cfd", root.Hash)
 
-	proof := manager.GenerateProof(1)
+	proof, err := manager.GenerateProof(1)
+	require.NoError(t, err)
 
 	verified := manager.VerifyProof(leafHashes[1], *proof, root.Hash)
 
 	assert.Equal(t, true, verified)
 
-	proof = manager.GenerateProof(0)
+	proof, err = manager.GenerateProof(0)
+	require.NoError(t, err)
 
 	verified = manager.VerifyProof(leafHashes[0], *proof, root.Hash)
 

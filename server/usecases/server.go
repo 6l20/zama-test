@@ -32,6 +32,11 @@ func (s *ServerUseCases) HandleFileRequest() http.HandlerFunc {
 	return s.server.HandleFileRequest()
 }
 
+func (s *ServerUseCases) HandleProofRequest() http.HandlerFunc {
+	s.logger.Info("HandleProofRequest")
+	return s.server.HandleProofRequest()
+}
+
 
 
 

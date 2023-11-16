@@ -41,14 +41,12 @@ type MerkleTree struct {
 type MerkleManager struct {
 	MerkleTree *MerkleTree
 	logger log.Logger
-	filePath string
 	level int
 }
 
-func NewMerkleManager(filePath string, logger log.Logger) *MerkleManager {
+func NewMerkleManager(logger log.Logger) *MerkleManager {
 	return &MerkleManager{
 		logger: logger,
-		filePath: filePath,
 	}
 }
 
@@ -174,33 +172,7 @@ func (m *MerkleManager) BuildMerkleTreeFromFS(rootDir string) (*MerkleTree, erro
     return m.MerkleTree, nil
 }
 
-
-// StoreMerkleRoot writes the Merkle root to a local file.
-func (m *MerkleManager) StoreMerkleRoot() error {
-	if m.MerkleTree == nil {
-		return fmt.Errorf("MerkleTree is nil")
-	}
-
-	m.logger.Debug("StoreMerkleRoot","hash", m.MerkleTree.Root.Hash)
-	
-    // Convert the Merkle root to a byte slice for writing to a file.
-    data := []byte(m.MerkleTree.Root.Hash)
-    // Write the data to the file, with file permissions set to read and write.
-    return os.WriteFile(m.filePath, data, 0644)
-}
-
-// LoadMerkleRoot reads the Merkle root from a local file.
-func (m *MerkleManager) LoadMerkleRoot() (string, error) {
-    // Read the data back from the file.
-    data, err := os.ReadFile(m.filePath)
-    if err != nil {
-        return "", err
-    }
-    // Convert the byte slice back to a string.
-    return string(data), nil
-}
-
-func (m *MerkleManager) GenerateProof(leafIndex int) *Proof {
+func (m *MerkleManager) GenerateProof(leafIndex int) (*Proof, error) {
 	path := []*ProofStep{}
 
 	leavesCounter := 0
@@ -212,6 +184,10 @@ func (m *MerkleManager) GenerateProof(leafIndex int) *Proof {
 			break
 		}
 		leavesCounter++
+	}
+
+	if node == nil {
+		return nil, fmt.Errorf("Leaf not found")
 	}
 
 	for node != nil  {
@@ -227,7 +203,7 @@ func (m *MerkleManager) GenerateProof(leafIndex int) *Proof {
 		Proof: path,
 	}
 
-	return proof
+	return proof, nil
 }
 
 func (m *MerkleManager) VerifyProof(leafHash string, proof Proof, rootHash string) bool {

@@ -1,12 +1,15 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/6l20/zama-test/common/log"
+	"github.com/6l20/zama-test/common/merkle"
 
 	"github.com/6l20/zama-test/server/config"
 )
@@ -16,11 +19,13 @@ import (
 type IServer interface {
 	HandleFileUpload() http.HandlerFunc
 	HandleFileRequest() http.HandlerFunc
+	HandleProofRequest() http.HandlerFunc
 }
 
 type Server struct {
 	Logger log.Logger
 	Config config.Config
+	merkleManager *merkle.MerkleManager
 }
 
 func NewServer(logger log.Logger, config config.Config) *Server {
@@ -29,6 +34,7 @@ func NewServer(logger log.Logger, config config.Config) *Server {
 	return &Server{
 		Logger: logger,
 		Config: config,
+		merkleManager: merkle.NewMerkleManager(logger.WithComponent("merkle-server")),
 	}
 }
 
@@ -75,7 +81,68 @@ func (s *Server) HandleFileUpload() http.HandlerFunc {
 
 func (s *Server) HandleFileRequest() http.HandlerFunc {
 
-	return nil
+	return func (w http.ResponseWriter, r *http.Request) {
+		// Extract the file name from the URL query parameters
+		fileName := r.URL.Query().Get("filename")
+		if fileName == "" {
+			http.Error(w, "Filename is required", http.StatusBadRequest)
+			return
+		}
+	
+		// Specify the directory where files are stored
+		fileDir := "path/to/your/files/"
+	
+		// Open the file
+		file, err := os.Open(fileDir + fileName)
+		if err != nil {
+			http.Error(w, "File not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+	
+		// Set the correct headers for content-disposition and content type
+		w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+		w.Header().Set("Content-Type", "application/octet-stream")
+	
+		// Stream the file content to the response
+		io.Copy(w, file)
+	}
+}
+
+func (s *Server) HandleProofRequest() http.HandlerFunc {
+	return func (w http.ResponseWriter, r *http.Request) {
+		// Extract the file name from the URL query parameters
+		s.Logger.Info("HandleProofRequest")
+		fileNumber := r.URL.Query().Get("filenum")
+		if fileNumber == "" {
+			http.Error(w, "filenum is required", http.StatusBadRequest)
+			return
+		}
+
+		f, err:= strconv.Atoi(fileNumber) 
+		if err != nil {
+			http.Error(w, "filenum must be an integer", http.StatusBadRequest)
+			return
+		}
+		
+		s.merkleManager.BuildMerkleTreeFromFS("/data")
+		proof, err := s.merkleManager.GenerateProof(f)
+		if err != nil {
+			http.Error(w, "Error generating proof", http.StatusBadRequest)
+			return
+		}
+
+		if proof == nil {
+			http.Error(w, "Proof is nil", http.StatusBadRequest)
+			return
+		}
+
+		// Send the proof back to the client
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(proof)
+		
+	}
 }
 
 func (s *Server) SaveFile() error {

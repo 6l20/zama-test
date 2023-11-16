@@ -17,6 +17,8 @@ func Router(useCases usecases.ServerUseCases) *mux.Router {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/upload", useCases.HandleFileUpload()).Methods("POST")
+	r.HandleFunc("/download/{filename}", useCases.HandleFileRequest()).Methods("GET")
+	r.HandleFunc("/proof/{filenum}", useCases.HandleProofRequest()).Methods("GET")
 	r.HandleFunc("/healthz", healthHandler.CheckHealth)
 	r.HandleFunc("/readyz", healthHandler.CheckHealth)
 	r.Handle("/metrics", promhttp.Handler())
