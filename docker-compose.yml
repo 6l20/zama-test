@@ -26,6 +26,8 @@ services:
       - .:/app
     links:
       - "server"
+    depends_on:
+      - server
 volumes:
   upload_data:
   minio_storage: {}
