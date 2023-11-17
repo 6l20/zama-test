@@ -207,6 +207,11 @@ func (m *MerkleManager) GenerateProof(leafIndex int) (*Proof, error) {
 }
 
 func (m *MerkleManager) VerifyProof(leafHash string, proof Proof, rootHash string) bool {
+	// Check leaf hash.
+	if leafHash == "" {
+		m.logger.Warn("VerifyProof", "leafHash", "empty")
+		return false
+	}
 	// Concatenate the leaf hash with each proof hash and hash them together.
 	calculatedHash := leafHash
 	for _, step := range proof.Proof {

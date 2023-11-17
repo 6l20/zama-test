@@ -10,6 +10,7 @@ import (
 
 	"github.com/6l20/zama-test/common/log"
 	"github.com/6l20/zama-test/common/merkle"
+	"github.com/gorilla/mux"
 
 	"github.com/6l20/zama-test/server/config"
 )
@@ -113,7 +114,8 @@ func (s *Server) HandleProofRequest() http.HandlerFunc {
 	return func (w http.ResponseWriter, r *http.Request) {
 		// Extract the file name from the URL query parameters
 		s.Logger.Info("HandleProofRequest")
-		fileNumber := r.URL.Query().Get("filenum")
+		vars := mux.Vars(r)
+		fileNumber := vars["filenum"]
 		if fileNumber == "" {
 			http.Error(w, "filenum is required", http.StatusBadRequest)
 			return

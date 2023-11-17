@@ -54,13 +54,15 @@ to quickly create a Cobra application.`,
 
 		useCases.GenerateMerkleTree()
 
+		useCases.UploadFilesFromDir(fileDirPath)
+
 		proof, err := useCases.GetMerkleProofForFile(1)
 		if err != nil {
 			logger.Error("Error getting proof:", err)
 		}
-		logger.Info("Proof:", proof)
+		logger.Info("Proof:", "proof", proof)
 
-		
+		useCases.VerifyMerkleProof("")
 	},	
 		
 }

@@ -67,7 +67,12 @@ func (c *Client) GenerateMerkleTree() error {
 }
 
 func (c *Client) GetMerkleProofForFile(fileNum int) (*merkle.Proof, error) {
-	return  Proof(fileNum, c.Config.ProofURL)
+	proof, err := Proof(fileNum, c.Config.ProofURL)
+	if err != nil {
+		return nil, err
+	}
+	c.currentProof = proof
+	return  c.currentProof, nil
 }
 
 func (c *Client) VerifyMerkleProof(leafHash string) bool  {

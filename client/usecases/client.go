@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"os"
+
 	"github.com/6l20/zama-test/client"
 	"github.com/6l20/zama-test/common/log"
 	"github.com/6l20/zama-test/common/merkle"
@@ -19,9 +21,23 @@ func NewClientUseCases(logger log.Logger, client client.IClient) *ClientUseCases
 	}
 }
 
-func (c *ClientUseCases) UploadFile(name string) error {
-	c.logger.Info("UploadFile")
-	return c.Client.UploadFile(name)
+func (c *ClientUseCases) UploadFilesFromDir(dirPath string) error {
+	c.logger.Info("UploadFilesFromDir")
+	files, err := os.ReadDir(dirPath)
+    if err != nil {
+        return err
+    }
+
+    for _, file := range files {
+        if file.IsDir() {
+			continue
+		}
+		err = c.Client.UploadFile(dirPath + "/" + file.Name())
+		if err != nil {
+			return err
+		}
+    }
+	return nil
 }
 
 func (c *ClientUseCases) DownloadFile() error {
